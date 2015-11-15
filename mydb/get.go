@@ -1,6 +1,7 @@
 package mydb
 
 import (
+	"database/sql"
 	"reflect"
 )
 
@@ -45,11 +46,27 @@ func Get(db SQLer, query string, listPtr interface{}, maker func() Rower) (ok bo
 	return true
 }
 
+// GetOne is a simple QueryRow that logs errors and
+// returns a successbool: null result is an error
 func GetOne(db SQLer, query string, item Rower) (ok bool) {
 	row := db.QueryRow(query)
 	err := item.RowScan(row)
 	if err != nil {
 		Log("mydb GetOne scan error:", err, "\n||", query)
+		return false
+	}
+	return true
+}
+
+// GetOneIf is a simple QueryRow that logs errors and
+// returns a successbool; null result is not an error
+func GetOneIf(db SQLer, query string, item Rower) (ok bool) {
+	row := db.QueryRow(query)
+	err := item.RowScan(row)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			Log("mydb GetOne scan error:", err, "\n||", query)
+		}
 		return false
 	}
 	return true

@@ -49,6 +49,10 @@ func Err(v ...interface{}) error {
 	return errors.New(fmt.Sprint(v...))
 }
 
+func QuietErr(v ...interface{}) {
+	ErrLog.Println(v...)
+}
+
 func SetErr(fileName string) error {
 	mEF, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
 	if err != nil {

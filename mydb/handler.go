@@ -90,3 +90,25 @@ func (s *SQLHandler) SetNull(key string) {
 func (s *SQLHandler) SetEtc(key, val string) {
 	s.Mods[key] = val
 }
+
+/*   TODO
+func (s *SQLHandler) SetIntSlice(key string, val []int) {
+	str := "'{"
+	parts := make([]string, len(val))
+	for i, x := range val {
+		parts[i] = strconv.Itoa(x)
+	}
+	str += strings.Join(parts, ",") + "}'"
+	s.Mods[key] = str
+}
+
+func (s *SQLHandler) SetStrSlice(key string, val []string) {
+	str := "'{"
+	parts := make([]string, len(val))
+	for i, x := range val {
+		parts[i] = fmt.Sprintf("\"%s\"", strings.Replace(x, "'", "''", -1))
+	}
+	str += strings.Join(parts, ",") + "}'"
+	s.Mods[key] = str
+}
+*/

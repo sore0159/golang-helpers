@@ -70,7 +70,7 @@ func (v *Handler) Link(str string) string {
 			r = append(r, part)
 		}
 	}
-	r = append(r, "")
+	//r = append(r, "")
 	return strings.Join(r, "/")
 }
 

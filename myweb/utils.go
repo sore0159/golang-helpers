@@ -61,3 +61,21 @@ func GetIntsIf(r *http.Request, varNames ...string) (ints map[string]int) {
 	}
 	return m
 }
+
+func GetIntsQuiet(r *http.Request, varNames ...string) (ints map[string]int, ok bool) {
+	m := make(map[string]int, len(varNames))
+	badNames := []string{}
+	for _, name := range varNames {
+		varStr := r.FormValue(name)
+		varI, err := strconv.Atoi(varStr)
+		if err != nil {
+			badNames = append(badNames, fmt.Sprintf("%s:%s", name, err))
+		} else {
+			m[name] = varI
+		}
+	}
+	if len(badNames) == 0 {
+		return m, true
+	}
+	return nil, false
+}

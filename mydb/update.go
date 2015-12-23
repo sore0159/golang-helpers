@@ -10,6 +10,11 @@ type Updater interface {
 	Commit()
 }
 
+type UpdateInserter interface {
+	Updater
+	Inserter
+}
+
 // UpdateList takes a list of items that satisfy Updater and
 // returns a list of Updaters
 // Probably won't use this much
@@ -85,6 +90,25 @@ func Update(db *sql.DB, list []Updater) (ok bool) {
 	}
 	for _, x := range list {
 		x.Commit()
+	}
+	return true
+}
+
+func Upsert(db SQLer, item UpdateInserter) (ok bool) {
+	query := item.UpdateQ()
+	if query == "" {
+		return true
+	}
+	res, err := db.Exec(query)
+	if err != nil {
+		Log("upsert exec failed:", err, "||", query)
+		return false
+	}
+	if aff, err := res.RowsAffected(); err != nil {
+		Log("upsert rowsaff error:", err)
+		return false
+	} else if aff == 0 {
+		return Insert(db, item)
 	}
 	return true
 }

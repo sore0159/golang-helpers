@@ -1,5 +1,15 @@
 package mydb
 
+func CheckNull(test []byte) bool {
+	nullBytes := []byte("NULL")
+	for i, b := range test {
+		if nullBytes[i] != b {
+			return false
+		}
+	}
+	return true
+}
+
 /* TODO
 import (
 	"errors"

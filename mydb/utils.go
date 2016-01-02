@@ -1,7 +1,13 @@
 package mydb
 
 func CheckNull(test []byte) bool {
+	if len(test) == 0 {
+		return true
+	}
 	nullBytes := []byte("NULL")
+	if len(test) != len(nullBytes) {
+		return false
+	}
 	for i, b := range test {
 		if nullBytes[i] != b {
 			return false

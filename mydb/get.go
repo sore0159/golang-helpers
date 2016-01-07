@@ -59,7 +59,8 @@ func GetOne(db SQLer, query string, item Rower) (ok bool) {
 }
 
 // GetOneIf is a simple QueryRow that logs errors and
-// returns a successbool; null result is not an error
+// returns a successbool; null result is false but
+// but is not logged
 func GetOneIf(db SQLer, query string, item Rower) (ok bool) {
 	row := db.QueryRow(query)
 	err := item.RowScan(row)

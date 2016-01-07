@@ -19,8 +19,8 @@ func Exec(db SQLer, query string) (ok bool) {
 	return true
 }
 
-// Exec just executes the query and returns a success bool (logging failures)
-// Affecting 0 rows is considered a failure
+// ExecIf just executes the query and returns a success bool (logging failures)
+// Affecting 0 rows is not considered a failure
 func ExecIf(db SQLer, query string) (ok bool) {
 	_, err := db.Exec(query)
 	if err != nil {

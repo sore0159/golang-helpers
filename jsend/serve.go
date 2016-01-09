@@ -19,7 +19,7 @@ func Success(w http.ResponseWriter, obj interface{}) {
 }
 
 func Error(w http.ResponseWriter, msg string) {
-	es := &errorShell{"error", 500, msg}
+	es := &errorShell{"error", msg, 500}
 	es.Serve(w)
 	return
 }

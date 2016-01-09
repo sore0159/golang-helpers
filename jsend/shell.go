@@ -7,7 +7,7 @@ import (
 
 type successShell struct {
 	Status string          `json:"status"`
-	Data   json.RawMessage `json:"data,omitempty"`
+	Data   json.RawMessage `json:"data"`
 }
 
 func (ss *successShell) Serve(w http.ResponseWriter) {
@@ -21,7 +21,7 @@ func (ss *successShell) Serve(w http.ResponseWriter) {
 
 type failShell struct {
 	Status string          `json:"status"`
-	Data   json.RawMessage `json:"data,omitempty"`
+	Data   json.RawMessage `json:"data"`
 	code   int
 }
 
@@ -41,8 +41,8 @@ func (fs *failShell) Serve(w http.ResponseWriter) {
 
 type errorShell struct {
 	Status  string `json:"status"`
+	Message string `json:"message"`
 	Code    int    `json:"code,omitempty"`
-	Message string `json:"message,omitempty"`
 }
 
 func (es *errorShell) Serve(w http.ResponseWriter) {

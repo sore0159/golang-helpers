@@ -16,6 +16,9 @@ type Inserter interface {
 // Insert returns a success bool and logs failures
 func Insert(db SQLer, item Inserter) (ok bool) {
 	query, scan := item.InsertQ()
+	if query == "" {
+		return true
+	}
 	if scan {
 		row := db.QueryRow(query)
 		if err := item.InsertScan(row); err != nil {

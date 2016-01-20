@@ -39,6 +39,9 @@ func (f *Filler) Clear() {
 func (f *Filler) TakePath(p *Path) {
 	f.Path = p
 }
+func (f *Filler) Scale(sx, sy float64) {
+	f.GC.Scale(sx, sy)
+}
 
 func (f *Filler) Fill(mypaths ...*Path) {
 	if len(mypaths) == 0 {
@@ -65,6 +68,18 @@ func (f *Filler) FillStroke(mypaths ...*Path) {
 	} else {
 		f.GC.FillStroke(ConvertPaths(mypaths)...)
 	}
+}
+
+func (p *Filler) SetFillColor(R, G, B, A uint8) {
+	c := color.RGBA{R, G, B, A}
+	p.CurFillColor = c
+	p.GC.SetFillColor(c)
+}
+
+func (p *Filler) SetStrokeColor(R, G, B, A uint8) {
+	c := color.RGBA{R, G, B, A}
+	p.CurStrokeColor = c
+	p.GC.SetStrokeColor(c)
 }
 
 func (p *Filler) SetFillC(name string) {
@@ -96,4 +111,9 @@ func (p *Filler) SetFillLight(s float64) {
 func (p *Filler) SetStrokeLight(s float64) {
 	c := Lighter(p.CurStrokeColor, s)
 	p.GC.SetStrokeColor(c)
+}
+
+func (f *Filler) Pencil() {
+	f.SetLineWidth(1)
+	f.SetStrokeC("black")
 }

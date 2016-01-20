@@ -61,7 +61,8 @@ func Pallate(name string) color.RGBA {
 		//return color.RGBA{0xff, 0x22, 0x00, 255}
 		return color.RGBA{0xaf, 0x2f, 0x1f, 255}
 	default:
-		panic("Unknown color name " + name + " !")
+		return color.RGBA{0xff, 0xcc, 0x66, 255}
+		//panic("Unknown color name " + name + " !")
 	}
 }
 

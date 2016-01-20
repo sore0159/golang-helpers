@@ -1,11 +1,24 @@
 package mydraw
 
+func (path *Path) AngledEllipse(cn P, rx, ry, angle float64) {
+	pt1, pt2 := cn.Bumpers(rx, angle)
+	const scale = 1.22
+	cv1, cv2 := pt1.GoPolar(scale*ry, angle), pt2.GoPolar(scale*ry, angle)
+	path.MoveTo(pt1)
+	path.CubicCurveTo(cv1, cv2, pt2)
+	cv1, cv2 = pt1.GoPolar(scale*ry, angle+1), pt2.GoPolar(scale*ry, angle+1)
+	path.CubicCurveTo(cv2, cv1, pt1)
+	path.Close()
+}
+
 func (p *Path) Ellipse(cn P, rx, ry float64) {
+	p.MoveTo(cn.Add(rx, 0))
 	p.ArcTo(cn, rx, ry, 0, 2)
 	p.Close()
 }
 
 func (p *Path) Circle(cn P, r float64) {
+	p.MoveTo(cn.Add(r, 0))
 	p.ArcTo(cn, r, r, 0, 2)
 	p.Close()
 }

@@ -27,7 +27,7 @@ func MakeGif(name string, frames int, delay int, framer func(int) (img draw.Imag
 	}
 	defer file.Close()
 	log.Println("GIF ENCODE START")
-	if err = gif.EncodeAll(file, &gif.GIF{frameList, delays, 0}); err != nil {
+	if err = gif.EncodeAll(file, &gif.GIF{Image: frameList, Delay: delays, LoopCount: 0}); err != nil {
 		log.Println("ENCODE ERR:", err)
 	}
 	log.Println("GIF ENCODE COMPLETE")

@@ -1,4 +1,4 @@
-package mydraw
+package mypaint
 
 func (path *Path) AngledEllipse(cn P, rx, ry, angle float64) {
 	pt1, pt2 := cn.Bumpers(rx, angle)

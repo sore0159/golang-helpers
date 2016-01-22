@@ -1,5 +1,6 @@
 package mydb
 
+/*
 func CheckNull(test []byte) bool {
 	if len(test) == 0 {
 		return true
@@ -15,6 +16,7 @@ func CheckNull(test []byte) bool {
 	}
 	return true
 }
+*/
 
 /* TODO
 import (

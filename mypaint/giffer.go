@@ -1,4 +1,4 @@
-package mydraw
+package mypaint
 
 import (
 	"image"

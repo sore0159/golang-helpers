@@ -1,4 +1,4 @@
-package mydraw
+package mypaint
 
 import (
 	"github.com/llgcode/draw2d/draw2dimg"

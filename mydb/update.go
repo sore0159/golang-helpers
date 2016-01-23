@@ -1,114 +1,37 @@
 package mydb
 
-import (
-	"database/sql"
-	"reflect"
-)
+import "fmt"
 
-type Updater interface {
-	UpdateQ() string
-	Commit()
-}
-
-type UpdateInserter interface {
-	Updater
-	Inserter
-}
-
-// UpdateList takes a list of items that satisfy Updater and
-// returns a list of Updaters
-// Probably won't use this much
-func UpdateList(list interface{}) []Updater {
-	listV := reflect.ValueOf(list)
-	if listV.Type().Kind() != reflect.Slice {
-		Log("bad type for mydb updatelist: not a slice:", listV)
-		return nil
+// Update is for mass updating and requires a
+// qArg maker function for its iterations
+//
+// For UpdateOne just do
+// err = db.Exec(query, args..)
+func Update(db SQLer, must bool, query string, cols []string, items ...SQLColumner) error {
+	stmt, err := db.Prepare(query)
+	if my, bad := Check(err, "update prepare failure", "query", query); bad {
+		return my
 	}
-	l := listV.Len()
-	if l < 1 {
-		return nil
-	}
-	r := make([]Updater, l)
-	for i := 0; i < l; i++ {
-		itemV := listV.Index(i)
-		test, ok := itemV.Interface().(Updater)
-		if ok {
-			r[i] = test
-		} else {
-			Log("bad item", i, "for mydb updatelist: not an Updater", listV)
-			return nil
+	defer stmt.Close()
+	for i, item := range items {
+		args, err := ColVals(item, cols)
+		if my, bad := Check(err, "update colvals failure", "index", i, "query", query, "cols", cols); bad {
+			return my
 		}
-	}
-	return r
-}
-
-// Update takes a list of Updaters and updates them all in one
-// transaction, returning a success bool
-// Update rollsback and logs errors on failure
-// If UpdateQ gives "" the item will not be updated
-func Update(db *sql.DB, list []Updater) (ok bool) {
-	tx, err := db.Begin()
-	if err != nil {
-		Log("update transaction begin error:", err)
-		return false
-	}
-	for _, x := range list {
-		query := x.UpdateQ()
-		if query == "" {
-			continue
+		res, err := stmt.Exec(args...)
+		if my, bad := Check(err, "update exec failure", "index", i, "query", query); bad {
+			return my
 		}
-		res, err := tx.Exec(query)
-		if err != nil {
-			Log("update exec failed:", err, "||", query)
-			err = tx.Rollback()
-			if err != nil {
-				Log("update rollback error:", err)
+		if must {
+			aff, err := res.RowsAffected()
+			if my, bad := Check(err, "update rows affected failure", "index", i, "query", query); bad {
+				return my
 			}
-			return false
-		}
-		if aff, err := res.RowsAffected(); err != nil || aff < 1 {
-			if err != nil {
-				Log("update rowsaff error:", err)
-				err = tx.Rollback()
-				if err != nil {
-					Log("update rollback error:", err)
-				}
-			} else {
-				Log("update failed: 0 rows affected || ", query)
-				err = tx.Rollback()
-				if err != nil {
-					Log("update rollback error:", err)
-				}
+			if aff != 1 {
+				my, _ := Check(fmt.Errorf("inadequate rows affected", aff), "update rows affected failure", "index", i, "query", query, "affected", aff)
+				return my
 			}
-			return false
 		}
 	}
-	err = tx.Commit()
-	if err != nil {
-		Log("update commit error:", err)
-		return false
-	}
-	for _, x := range list {
-		x.Commit()
-	}
-	return true
-}
-
-func Upsert(db SQLer, item UpdateInserter) (ok bool) {
-	query := item.UpdateQ()
-	if query == "" {
-		return true
-	}
-	res, err := db.Exec(query)
-	if err != nil {
-		Log("upsert exec failed:", err, "||", query)
-		return false
-	}
-	if aff, err := res.RowsAffected(); err != nil {
-		Log("upsert rowsaff error:", err)
-		return false
-	} else if aff == 0 {
-		return Insert(db, item)
-	}
-	return true
+	return nil
 }

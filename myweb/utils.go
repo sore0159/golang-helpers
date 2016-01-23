@@ -1,19 +1,10 @@
 package myweb
 
 import (
-	"fmt"
-	"log"
 	"net/http"
 	"strconv"
-	"strings"
 	"unicode"
 )
-
-var Log = log.Println
-
-func SetLogger(f func(...interface{})) {
-	Log = f
-}
 
 var TextValid = MakeValidator(15)
 
@@ -31,23 +22,17 @@ func MakeValidator(maxLen int) func(string) bool {
 	}
 }
 
-func GetInts(r *http.Request, varNames ...string) (ints map[string]int, ok bool) {
-	m := make(map[string]int, len(varNames))
-	badNames := []string{}
-	for _, name := range varNames {
+func GetInts(r *http.Request, varNames ...string) (ints []int, ok bool) {
+	ints = make([]int, len(varNames))
+	for i, name := range varNames {
 		varStr := r.FormValue(name)
 		varI, err := strconv.Atoi(varStr)
 		if err != nil {
-			badNames = append(badNames, fmt.Sprintf("%s:%s", name, err))
-		} else {
-			m[name] = varI
+			return nil, false
 		}
+		ints[i] = varI
 	}
-	if len(badNames) == 0 {
-		return m, true
-	}
-	Log("GetInts errors:", strings.Join(badNames, "||"))
-	return nil, false
+	return ints, true
 }
 
 func GetIntsIf(r *http.Request, varNames ...string) (ints map[string]int) {
@@ -60,18 +45,4 @@ func GetIntsIf(r *http.Request, varNames ...string) (ints map[string]int) {
 		}
 	}
 	return m
-}
-
-func GetIntsQuiet(r *http.Request, varNames ...string) (ints map[string]int, ok bool) {
-	m := make(map[string]int, len(varNames))
-	for _, name := range varNames {
-		varStr := r.FormValue(name)
-		varI, err := strconv.Atoi(varStr)
-		if err != nil {
-			return nil, false
-		} else {
-			m[name] = varI
-		}
-	}
-	return m, true
 }

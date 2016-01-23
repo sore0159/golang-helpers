@@ -19,15 +19,13 @@ func MakeMixer(tpdir string, fMap map[string]interface{}) func(...string) *templ
 func TemplateDict(val ...interface{}) (map[string]interface{}, error) {
 	if len(val)%2 != 0 {
 		err := errors.New("template dict needs even args")
-		Log(err)
 		return nil, err
 	}
 	d := make(map[string]interface{}, len(val)/2)
 	for i := 0; i < len(val); i += 2 {
 		str, ok := val[i].(string)
 		if !ok {
-			err := errors.New(fmt.Sprintf("bad template dict arg", val[i], ": need string keys"))
-			Log(err)
+			err := fmt.Errorf("bad template dict arg", val[i], ": need string keys")
 			return nil, err
 		}
 		d[str] = val[i+1]

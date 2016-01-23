@@ -2,6 +2,7 @@ package myweb
 
 import (
 	"html/template"
+	"mule/mybad"
 	"net/http"
 	"strconv"
 	"strings"
@@ -22,12 +23,12 @@ func MakeHandler(r *http.Request) *Handler {
 	}
 }
 
-func (h *Handler) Apply(w http.ResponseWriter, t *template.Template, tName string, app interface{}) {
-	err := t.ExecuteTemplate(w, tName, app)
-	if err != nil {
-		Log("template apply error:", err)
-		return
+func (h *Handler) Apply(w http.ResponseWriter, t *template.Template, tName string, app interface{}) (err error) {
+	err = t.ExecuteTemplate(w, tName, app)
+	if my, bad := mybad.Check(err, "template execution failure", "name", tName); bad {
+		return my
 	}
+	return nil
 }
 
 func (h *Handler) SetApp(a interface{}) {
@@ -83,4 +84,11 @@ func (v *Handler) IntAt(n int) (int, bool) {
 		return 0, false
 	}
 	return x, true
+}
+
+func (v *Handler) StrAt(n int) (string, bool) {
+	if n < 0 || len(v.Path)-1 < n {
+		return "", false
+	}
+	return v.Path[n], true
 }

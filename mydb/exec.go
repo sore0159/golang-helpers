@@ -1,31 +1,23 @@
 package mydb
 
-// Exec just executes the query and returns a success bool (logging failures)
-// Affecting 0 rows is considered a failure
-func Exec(db SQLer, query string) (ok bool) {
-	res, err := db.Exec(query)
-	if err != nil {
-		Log("query exec err:", err, "||", query)
-		return false
-	}
-	if aff, err := res.RowsAffected(); err != nil || aff < 1 {
-		if err != nil {
-			Log("insert exec rowsaff err:", err, "||", query)
-		} else {
-			Log("insert exec rowsaff < 1: query", query)
-		}
-		return false
-	}
-	return true
-}
+import "fmt"
 
-// ExecIf just executes the query and returns a success bool (logging failures)
-// Affecting 0 rows is not considered a failure
-func ExecIf(db SQLer, query string) (ok bool) {
-	_, err := db.Exec(query)
-	if err != nil {
-		Log("query ExecIf err:", err, "||", query)
-		return false
+// Exec executes the query and checks if anything is affected
+//
+// If you don't need rows affected just do
+// _, err := db.Exec(query, qArgs...)
+func Exec(db SQLer, query string, qArgs ...interface{}) (err error) {
+	res, err := db.Exec(query, qArgs...)
+	if my, bad := Check(err, "exec failure", "query", query); bad {
+		return my
 	}
-	return true
+	aff, err := res.RowsAffected()
+	if my, bad := Check(err, "rows affected failure", "query", query); bad {
+		return my
+	}
+	if aff < 1 {
+		my, _ := Check(fmt.Errorf("rows affected inadequate"), "exec rows affected failure", "query", query, "affected", aff)
+		return my
+	}
+	return nil
 }

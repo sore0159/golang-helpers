@@ -2,6 +2,7 @@ package mybad
 
 import (
 	"fmt"
+	"path"
 	"strings"
 )
 
@@ -39,7 +40,8 @@ func (me *MuleError) LogError() string {
 			}
 			ctxStr = fmt.Sprintf(", %s", strings.Join(subparts, ", "))
 		}
-		parts[i+1] = fmt.Sprintf("%s(%02d %s), msg=\"%s\"%s", badStr, layer.LineNum, layer.FileName, layer.Message, ctxStr)
+		fileStr := path.Base(layer.FileName)
+		parts[i+1] = fmt.Sprintf("%s(%s %02d), msg=\"%s\"%s", badStr, fileStr, layer.LineNum, layer.Message, ctxStr)
 
 	}
 	parts[0] = me.BaseError.Error()

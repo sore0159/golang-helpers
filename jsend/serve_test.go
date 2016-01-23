@@ -28,8 +28,8 @@ func pageTestServeJson(w http.ResponseWriter, r *http.Request) {
 
 func pageTestReadJson(w http.ResponseWriter, r *http.Request) {
 	g := &struct{}{}
-	if !Read(r, g) {
-		log.Println("ERROR READING", g)
+	if my, bad := Check(Read(r, g), "test read page"); bad {
+		log.Println("ERROR READING", g, ":", my.MuleError())
 	}
 	log.Println("READ", g)
 }

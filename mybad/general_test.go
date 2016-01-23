@@ -35,3 +35,12 @@ func TestThird(t *testing.T) {
 	log.Println(my.LogError())
 	log.Println(my.MuleError())
 }
+
+func TestFourth(t *testing.T) {
+	testErr := errors.New("TEST ERROR3")
+	my, bad := BuildCheckTest(testErr, "HELLO3", "time", func() interface{} { return time.Now() })
+	log.Println("BAD:", bad)
+	log.Println(my.LogError())
+}
+
+var BuildCheckTest = BuildCheck("package", "mybad", "testing", 12345)

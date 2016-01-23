@@ -7,31 +7,27 @@ import (
 	"net/http"
 )
 
-func Success(w http.ResponseWriter, obj interface{}) {
+func Success(w http.ResponseWriter, obj interface{}) (err error) {
 	raw, err := json.Marshal(obj)
-	if err != nil {
-		Log("ERROR JSON MARSHALLING IN JSEND SUCCESS FUNC:", obj, err)
-		Error(w, "ERROR MARSHALLING OBJECT TO JSON IN JSEND SUCCESS FUNC")
-		return
+	if my, bad := Check(err, "success marshal", "object", obj); bad {
+		Error(w, my.Error())
+		return my
 	}
 	ss := &successShell{"success", raw}
-	ss.Serve(w)
+	return ss.Serve(w)
 }
 
-func Error(w http.ResponseWriter, msg string) {
+func Error(w http.ResponseWriter, msg string) (err error) {
 	es := &errorShell{"error", msg, 500}
-	es.Serve(w)
-	return
+	return es.Serve(w)
 }
 
-func Fail(w http.ResponseWriter, code int, data interface{}) {
+func Fail(w http.ResponseWriter, code int, data interface{}) (err error) {
 	raw, err := json.Marshal(data)
-	if err != nil {
-		Log("ERROR JSON MARSHALLING IN JSEND FAIL FUNC:", data, err)
-		Error(w, "ERROR MARSHALLING OBJECT TO JSON IN JSEND FAIL FUNC")
-		return
+	if my, bad := Check(err, "fail marshal", "data", data); bad {
+		Error(w, my.Error())
+		return my
 	}
 	fs := &failShell{"fail", raw, code}
-	fs.Serve(w)
-	return
+	return fs.Serve(w)
 }

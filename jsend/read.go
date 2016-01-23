@@ -7,20 +7,19 @@ import (
 	"net/http"
 )
 
-func Read(r *http.Request, j interface{}) (ok bool) {
+func Read(r *http.Request, j interface{}) (err error) {
 	var bytes []byte
-	var err error
-	if bytes, err = ioutil.ReadAll(io.LimitReader(r.Body, MAXSIZE)); err != nil {
-		Log("JSEND R BODY READ ERROR:", err)
-		return false
+	bytes, err = ioutil.ReadAll(io.LimitReader(r.Body, MAXSIZE))
+	if my, bad := Check(err, "read body readall"); bad {
+		return my
 	}
-	if err = r.Body.Close(); err != nil {
-		Log("JSEND R BODY CLOSE ERROR:", err)
-		return false
+	err = r.Body.Close()
+	if my, bad := Check(err, "read body close"); bad {
+		return my
 	}
-	if err = json.Unmarshal(bytes, j); err != nil {
-		Log("JSEND UNMARSHAL ERROR FOR:", j, err)
-		return false
+	err = json.Unmarshal(bytes, j)
+	if my, bad := Check(err, "read unmarshal"); bad {
+		return my
 	}
-	return true
+	return nil
 }

@@ -1,17 +1,17 @@
 package mydb
 
-type ColSource interface {
-	Next() SQLColumner
+type SQLerNewer interface {
+	New() SQLer
 }
 
 // Get is for automated group selecting; it requires a
-// ColSource interface to handle all the slice population
+// SQLerSource interface to handle all the slice population
 // for it
 //
 // For GetOne just do
 // err := db.QueryRow(query, queryArgs...).Scan(ptrs...)
 // (test against sql.ErrNoRows if wanted)
-func Get(db SQLer, source ColSource, query string, qArgs ...interface{}) (err error) {
+func Get(db DBer, source SQLerNewer, query string, qArgs ...interface{}) (err error) {
 	rows, err := db.Query(query, qArgs...)
 	if my, bad := Check(err, "get query failure", "query", query); bad {
 		return my
@@ -22,7 +22,7 @@ func Get(db SQLer, source ColSource, query string, qArgs ...interface{}) (err er
 		return my
 	}
 	for rows.Next() {
-		next := source.Next()
+		next := source.New()
 		ptrs, err := ColPtrs(next, cols)
 		if my, bad := Check(err, "scanrows next ptrs failure", "cols", cols); bad {
 			return my

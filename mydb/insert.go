@@ -7,7 +7,7 @@ import (
 // Insert takes an Inserter and runs InsertQ, calling Scan based
 // on the second value of InsertQ
 // Insert returns a success bool and logs failures
-func Insert(db SQLer, query string, cols []string, scanCols []string, items ...SQLColumner) (err error) {
+func Insert(db DBer, query string, cols []string, scanCols []string, items ...SQLer) (err error) {
 	stmt, err := db.Prepare(query)
 	if my, bad := Check(err, "insert prepare failure", "query", query); bad {
 		return my

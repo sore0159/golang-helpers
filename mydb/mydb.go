@@ -10,7 +10,7 @@ import (
 var Check = mybad.BuildCheck("package", "mydb")
 
 // SQLer allows functions to use either db or tx
-type SQLer interface {
+type DBer interface {
 	Exec(string, ...interface{}) (sql.Result, error)
 	QueryRow(string, ...interface{}) *sql.Row
 	Query(string, ...interface{}) (*sql.Rows, error)

@@ -7,7 +7,7 @@ import "fmt"
 //
 // For UpdateOne just do
 // err = db.Exec(query, args..)
-func Update(db SQLer, must bool, query string, cols []string, items ...SQLColumner) error {
+func Update(db DBer, must bool, query string, cols []string, items ...SQLer) error {
 	stmt, err := db.Prepare(query)
 	if my, bad := Check(err, "update prepare failure", "query", query); bad {
 		return my

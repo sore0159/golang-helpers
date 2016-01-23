@@ -1,22 +1,21 @@
 package mydb
 
-import "fmt"
+import (
+	"database/sql"
+	"fmt"
+)
 
-// Exec executes the query and checks if anything is affected
-//
-// If you don't need rows affected just do
-// _, err := db.Exec(query, qArgs...)
-func Exec(db SQLer, query string, qArgs ...interface{}) (err error) {
-	res, err := db.Exec(query, qArgs...)
-	if my, bad := Check(err, "exec failure", "query", query); bad {
+// For wrapping db.Exec(....) to check if rows aff > 0
+func ExecCheck(res sql.Result, err error) error {
+	if my, bad := Check(err, "exec failure"); bad {
 		return my
 	}
 	aff, err := res.RowsAffected()
-	if my, bad := Check(err, "rows affected failure", "query", query); bad {
+	if my, bad := Check(err, "rows affected failure"); bad {
 		return my
 	}
 	if aff < 1 {
-		my, _ := Check(fmt.Errorf("rows affected inadequate"), "exec rows affected failure", "query", query, "affected", aff)
+		my, _ := Check(fmt.Errorf("rows affected inadequate"), "exec rows affected failure", "affected", aff)
 		return my
 	}
 	return nil

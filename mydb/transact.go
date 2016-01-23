@@ -4,7 +4,7 @@ import (
 	"database/sql"
 )
 
-func Transact(db *sql.DB, f func(SQLer) error) (err error) {
+func Transact(db *sql.DB, f func(DBer) error) (err error) {
 	tx, err := db.Begin()
 	if my, bad := Check(err, "transaction begin failure"); bad {
 		return my

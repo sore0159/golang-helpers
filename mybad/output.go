@@ -58,10 +58,10 @@ func (me *MuleError) MuleError() string {
 		return fmt.Sprintf("%s<nil>%s", start, end)
 	}
 	base := fmt.Sprintf(
-		"NUM LAYERS: %02d\n-------- BASE ERROR ---------\n%s\n", len(me.Layers), me.BaseError.Error())
+		"NUM LAYERS: %02d\n=============== BASE ERROR ===============\n%s\n", len(me.Layers), me.BaseError.Error())
 	parts := make([]string, len(me.Layers))
 	for i, layer := range me.Layers {
-		header := fmt.Sprintf("--------  LAYER %02d   --------\n", i+1)
+		header := fmt.Sprintf("===============  LAYER %02d   ===============\n", i+1)
 		//const tailer = "--------------------\n"
 		parts[i] = fmt.Sprintf("%s%s", header, layer.MuleOutput())
 	}
@@ -86,7 +86,7 @@ func (ly *Layer) MuleOutput() string {
 			} else {
 				item = ly.ContextItems[i]
 			}
-			parts[i] = fmt.Sprintf("||CONTEXT KEY|| \"%s\"\n||CONTEXT ITEM||-------\n%+v\n-----------------------\n", key, item)
+			parts[i] = fmt.Sprintf("||CONTEXT KEY|| \"%s\"\n||CONTEXT ITEM|| %+v\n", key, item)
 		}
 		ctxStr = strings.Join(parts, "")
 	} else {

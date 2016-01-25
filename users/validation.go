@@ -5,19 +5,21 @@ import (
 	"strings"
 )
 
-func (rg *Registry) validLogin(userName, password string) (valid bool) {
+func (rg *Registry) validLogin(userName, password string) (valid bool, err error) {
 	if !(myweb.TextValid(userName) && myweb.TextValid(password)) {
-		return false
+		return false, nil
 	}
-	pass, ok := rg.getPW(userName)
+	pass, ok, err := rg.getPW(userName)
+	if my, bad := Check(err, "valid login check failure", "username", userName, "password", password); bad {
+		return false, my
+	}
 	if !ok {
-		return false
+		return false, nil
 	}
-	return pass == password
+	return pass == password, nil
 }
 
-func (rg *Registry) createUser(name, password string) (nameOk, passOk, dbOk bool) {
-	dbOk = true
+func (rg *Registry) createUser(name, password string) (nameOk, passOk bool, err error) {
 	nameOk, passOk = myweb.TextValid(name), myweb.TextValid(password)
 	if nameOk {
 		lowerName := strings.ToLower(name)
@@ -30,11 +32,17 @@ func (rg *Registry) createUser(name, password string) (nameOk, passOk, dbOk bool
 		}
 	}
 	if nameOk {
-		nameOk, dbOk = rg.nameFree(name)
+		nameOk, err = rg.nameFree(name)
+		if my, bad := Check(err, "create user failure"); bad {
+			return false, false, my
+		}
 	}
-	if !(nameOk && passOk && dbOk) {
-		return
+	if !(nameOk && passOk) {
+		return nameOk, passOk, nil
 	}
-	dbOk = rg.insertUser(name, password)
-	return
+	err = rg.insertUser(name, password)
+	if my, bad := Check(err, "create user failure"); bad {
+		return false, false, my
+	}
+	return true, true, nil
 }

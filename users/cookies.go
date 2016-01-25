@@ -25,13 +25,13 @@ func (rg *Registry) unsetCookie(w http.ResponseWriter) {
 	http.SetCookie(w, cookie)
 }
 
-func (rg *Registry) checkCookie(r *http.Request) (User, bool) {
+func (rg *Registry) checkCookie(r *http.Request) (User, bool, error) {
 	cookie, err := r.Cookie("username")
-	if err == http.ErrNoCookie {
-		return User(""), false
-	} else if err != nil {
-		// Log(err)
-		return User(""), false
+	if my, bad := Check(err, "check cookie failure"); bad {
+		if my.BaseIs(http.ErrNoCookie) {
+			return User(""), false, nil
+		}
+		return User(""), false, my
 	}
-	return User(cookie.Value), true
+	return User(cookie.Value), true, nil
 }

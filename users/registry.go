@@ -16,29 +16,33 @@ func (u User) String() string {
 	return string(u)
 }
 
-func (rg *Registry) Create(w http.ResponseWriter, r *http.Request) (nameOk, passOk, dbOk bool) {
+func (rg *Registry) Create(w http.ResponseWriter, r *http.Request) (nameOk, passOk bool, err error) {
 	name, password := r.FormValue("username"), r.FormValue("password")
-	nameOk, passOk, dbOk = rg.createUser(name, password)
-	if !(nameOk && passOk && dbOk) {
+	nameOk, passOk, err = rg.createUser(name, password)
+	if !(nameOk && passOk && err == nil) {
 		return
 	}
 	rg.setCookie(name, w)
 	return
 }
 
-func (rg *Registry) Login(w http.ResponseWriter, r *http.Request) (User, bool) {
+func (rg *Registry) Login(w http.ResponseWriter, r *http.Request) (User, bool, error) {
 	name, password := r.FormValue("username"), r.FormValue("password")
-	if !rg.validLogin(name, password) {
-		return User(""), false
+	ok, err := rg.validLogin(name, password)
+	if my, bad := Check(err, "Login failure", "name", name, "password", password); bad {
+		return User(""), false, my
+	}
+	if !ok {
+		return User(""), false, nil
 	}
 	rg.setCookie(name, w)
-	return User(name), true
+	return User(name), true, nil
 }
 
 func (rg *Registry) Logout(w http.ResponseWriter, r *http.Request) {
 	rg.unsetCookie(w)
 }
 
-func (rg *Registry) IsLoggedIn(w http.ResponseWriter, r *http.Request) (User, bool) {
+func (rg *Registry) IsLoggedIn(w http.ResponseWriter, r *http.Request) (User, bool, error) {
 	return rg.checkCookie(r)
 }

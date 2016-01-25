@@ -12,7 +12,11 @@ import (
 //
 // Loggers behave otherwise just like standard
 // library loggers with an extra check on
-// Println and Print for *MuleError handling
+// Println for *MuleError handling
+//
+// Note that this will mess with fileline
+// checking flags of loggers for Println;
+// use Print or Ping instead
 type Logger struct {
 	*log.Logger
 	writer io.Writer

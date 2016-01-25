@@ -1,41 +1,73 @@
 package mydb
 
-// ------------ FROM STACK OVERFLOW ----------- //
 import (
+	"database/sql/driver"
 	"fmt"
-	"regexp"
 	"strings"
 )
 
-var (
-	// unquoted array values must not contain: (" , \ { } whitespace NULL)
-	// and must be at least one char
-	unquotedChar  = `[^",\\{}\s(NULL)]`
-	unquotedValue = fmt.Sprintf("(%s)+", unquotedChar)
-
-	// quoted array values are surrounded by double quotes, can be any
-	// character except " or \, which must be backslash escaped:
-	quotedChar  = `[^"\\]|\\"|\\\\`
-	quotedValue = fmt.Sprintf("\"(%s)*\"", quotedChar)
-
-	// an array value may be either quoted or unquoted:
-	arrayValue = fmt.Sprintf("(?P<value>(%s|%s))", unquotedValue, quotedValue)
-
-	// Array values are separated with a comma IF there is more than one value:
-	arrayExp = regexp.MustCompile(fmt.Sprintf("((%s)(,)?)", arrayValue))
-)
-
-// Parse the output string from the array type.
-// Regex used: (((?P<value>(([^",\\{}\s(NULL)])+|"([^"\\]|\\"|\\\\)*")))(,)?)
-func pgArrayToSlice(array string) []string {
-	var valueIndex int
-	results := make([]string, 0)
-	matches := arrayExp.FindAllStringSubmatch(array, -1)
-	for _, match := range matches {
-		s := match[valueIndex]
-		// the string _might_ be wrapped in quotes, so trim them:
-		s = strings.Trim(s, "\"")
-		results = append(results, s)
+// I have no idea how robust this is, but it works for now
+// NULL, for example, will parse the same as "NULL" -_-
+func SqlArrayToParts(array string) []string {
+	if array == "{}" {
+		return []string{}
 	}
-	return results
+	array = strings.Trim(array, "{}")
+	var inQuotes, escaped bool
+	var count int
+	parts := []string{""}
+	for _, char := range array {
+		if escaped {
+			if char == '"' || char == '\\' {
+				parts[count] = fmt.Sprintf("%s%c", parts[count], char)
+			} else {
+				parts[count] = fmt.Sprintf("%s\\%c", parts[count], char)
+			}
+			escaped = false
+		} else if char == '\\' {
+			escaped = true
+		} else if char == '"' {
+			inQuotes = !inQuotes
+		} else if !inQuotes && char == ',' {
+			count += 1
+			parts = append(parts, "")
+		} else {
+			parts[count] = fmt.Sprintf("%s%c", parts[count], char)
+		}
+	}
+	return parts
+}
+
+type StringList []string
+
+func NewStringList() *StringList {
+	sl := StringList([]string{})
+	return &sl
+}
+
+func (sl *StringList) Scan(value interface{}) error {
+	if value == nil {
+		*sl = nil
+		return nil
+	}
+	// A real party bunch up there
+	bytes, ok := value.([]byte)
+	if !ok {
+		return fmt.Errorf("Bad value scanned to stringlist:", value)
+	}
+	*sl = SqlArrayToParts(string(bytes))
+	return nil
+}
+func (sl StringList) Value() (driver.Value, error) {
+	if len(sl) == 0 {
+		return "{}", nil
+	}
+	parts := make([]string, len(sl))
+	for i, pt := range sl {
+		str := strings.Replace(pt, `\`, `\\`, -1)
+		str = strings.Replace(str, "\"", `\"`, -1)
+		parts[i] = fmt.Sprintf("\"%s\"", str)
+	}
+	str := fmt.Sprintf("{%s}", strings.Join(parts, ",")) //, nil
+	return str, nil
 }

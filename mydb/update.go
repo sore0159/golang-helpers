@@ -19,16 +19,16 @@ func Update(db DBer, must bool, query string, cols []string, items ...SQLer) err
 			return my
 		}
 		res, err := stmt.Exec(args...)
-		if my, bad := Check(err, "update exec failure", "index", i, "query", query); bad {
+		if my, bad := Check(err, "update exec failure", "index", i, "query", query, "args", args); bad {
 			return my
 		}
 		if must {
 			aff, err := res.RowsAffected()
-			if my, bad := Check(err, "update rows affected failure", "index", i, "query", query); bad {
+			if my, bad := Check(err, "update rows affected failure", "index", i, "query", query, "args", args); bad {
 				return my
 			}
 			if aff != 1 {
-				my, _ := Check(fmt.Errorf("inadequate rows affected", aff), "update rows affected failure", "index", i, "query", query, "affected", aff)
+				my, _ := Check(fmt.Errorf("inadequate rows affected", aff), "update rows affected failure", "index", i, "query", query, "args", args, "affected", aff)
 				return my
 			}
 		}

@@ -7,6 +7,12 @@ import (
 	"os"
 )
 
+// StockDebugLogger just logs to stderr with normal
+// flags plus file line info and "DEBUG" prefix
+func StockDebugLogger() *Logger {
+	return New(os.Stderr, "DEBUG:", log.Lshortfile|log.Ldate|log.Ltime)
+}
+
 // StockErrorLogger just logs to stderr with normal
 // flags and "ERROR" prefix
 func StockErrorLogger() *Logger {

@@ -52,3 +52,7 @@ func (me *MuleError) AddContext(ctx ...interface{}) {
 func (me *MuleError) BaseIs(err error) bool {
 	return me.BaseError == err
 }
+
+func (me *MuleError) Grab(m2 *MuleError) {
+	me.Layers = append(me.Layers, m2.Layers...)
+}

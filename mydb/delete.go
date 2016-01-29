@@ -35,7 +35,7 @@ func Delete(db DBer, table string, pkCols []string, items ...SQLer) error {
 			return my
 		}
 		if aff != 1 {
-			my, _ := Check(fmt.Errorf("inadequate rows affected", aff), "delete rows affected failure", "index", i, "query", query, "args", args, "affected", aff)
+			my, _ := Check(fmt.Errorf("inadequate rows affected %v", aff), "delete rows affected failure", "index", i, "query", query, "args", args, "affected", aff)
 			return my
 		}
 	}

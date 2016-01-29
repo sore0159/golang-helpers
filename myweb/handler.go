@@ -86,6 +86,19 @@ func (v *Handler) IntAt(n int) (int, bool) {
 	return x, true
 }
 
+func (v *Handler) IntsAt(list ...int) (r []int, ok bool) {
+	r = make([]int, len(list))
+	ok = true
+	for i, n := range list {
+		if x, subOk := v.IntAt(n); subOk {
+			r[i] = x
+		} else {
+			ok = false
+		}
+	}
+	return
+}
+
 func (v *Handler) StrAt(n int) (string, bool) {
 	if n < 0 || len(v.Path)-1 < n {
 		return "", false

@@ -25,6 +25,8 @@ func Pallate(name string) color.RGBA {
 		return color.RGBA{0x10, 0x10, 0x20, 255}
 	case "lightgrey", "lightgray":
 		return color.RGBA{200, 200, 200, 255}
+	case "background":
+		return color.RGBA{255, 230, 230, 255}
 	case "grey", "gray":
 		return color.RGBA{100, 100, 100, 255}
 	case "auburn", "yellow":

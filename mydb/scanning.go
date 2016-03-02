@@ -3,6 +3,7 @@ package mydb
 import (
 	"database/sql/driver"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -67,6 +68,53 @@ func (sl StringList) Value() (driver.Value, error) {
 		str := strings.Replace(pt, `\`, `\\`, -1)
 		str = strings.Replace(str, "\"", `\"`, -1)
 		parts[i] = fmt.Sprintf("\"%s\"", str)
+	}
+	str := fmt.Sprintf("{%s}", strings.Join(parts, ",")) //, nil
+	return str, nil
+}
+
+type IntList []int
+
+func NewIntList() *IntList {
+	il := IntList([]int{})
+	return &il
+}
+
+func (il *IntList) Scan(value interface{}) error {
+	if value == nil {
+		*il = nil
+		return nil
+	}
+	bytes, ok := value.([]byte)
+	if !ok {
+		return fmt.Errorf("Bad value scanned to stringlist: %v", value)
+	}
+	valStr := string(bytes)
+	if valStr == "{}" {
+		*il = []int{}
+		return nil
+	}
+	valStr = strings.Trim(valStr, "{}")
+	parts := strings.Split(valStr, ",")
+	res := make([]int, len(parts))
+	for i, xStr := range parts {
+		x, err := strconv.Atoi(xStr)
+		if err != nil {
+			return fmt.Errorf("Bad value at index %d for scanned to stringlist: %v", i, value)
+		}
+		res[i] = x
+	}
+	*il = res
+	return nil
+}
+
+func (il IntList) Value() (driver.Value, error) {
+	if len(il) == 0 {
+		return "{}", nil
+	}
+	parts := make([]string, len(il))
+	for i, pt := range il {
+		parts[i] = strconv.Itoa(pt)
 	}
 	str := fmt.Sprintf("{%s}", strings.Join(parts, ",")) //, nil
 	return str, nil

@@ -10,7 +10,7 @@ import (
 )
 
 func (lg *Logger) Ping(v ...interface{}) {
-	_, fName, lineNum, ok := runtime.Caller(1)
+	_, fName, lineNum, ok := runtime.Caller(2)
 	var pingStr string
 	if !ok {
 		pingStr = "PING (?? ??)"

@@ -5,39 +5,6 @@ import (
 	"strings"
 )
 
-type selector struct {
-	SelectCols []string
-	Table      string
-	Where      Condition
-	Order      string
-}
-
-func (s *selector) FROM(table string) *selector {
-	s.Table = table
-	return s
-}
-func (s *selector) WHERE(cond Condition) *selector {
-	s.Where = cond
-	return s
-}
-func (s *selector) ORDER(ord string) *selector {
-	s.Order = ord
-	return s
-}
-
-func (s *selector) Compile() (query string, args []interface{}) {
-	query = fmt.Sprintf("SELECT %s FROM %s", strings.Join(s.SelectCols, ","), s.Table)
-	if s.Where != nil {
-		var str string
-		str, args = s.Where.SQL(args)
-		query = fmt.Sprintf("%s WHERE %s", query, str)
-	}
-	if s.Order != "" {
-		query = fmt.Sprintf("%s ORDER BY %s", query, s.Order)
-	}
-	return query, args
-}
-
 type Condition interface {
 	SQL(args []interface{}) (string, []interface{})
 }

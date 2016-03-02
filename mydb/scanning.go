@@ -87,7 +87,7 @@ func (il *IntList) Scan(value interface{}) error {
 	}
 	bytes, ok := value.([]byte)
 	if !ok {
-		return fmt.Errorf("Bad value scanned to stringlist: %v", value)
+		return fmt.Errorf("Bad value scanned to intlist: %v", value)
 	}
 	valStr := string(bytes)
 	if valStr == "{}" {
@@ -100,7 +100,7 @@ func (il *IntList) Scan(value interface{}) error {
 	for i, xStr := range parts {
 		x, err := strconv.Atoi(xStr)
 		if err != nil {
-			return fmt.Errorf("Bad value at index %d for scanned to stringlist: %v", i, value)
+			return fmt.Errorf("Bad value at index %d for scanned to intlist: %v", i, value)
 		}
 		res[i] = x
 	}

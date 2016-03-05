@@ -7,12 +7,17 @@ import (
 
 type Condition interface {
 	SQL(args []interface{}) (string, []interface{})
+	Args(args []interface{}) []interface{}
 }
 
 type Compare struct {
 	Operator string
 	ColName  string
 	ColVal   interface{}
+}
+
+func (c Compare) Args(args []interface{}) []interface{} {
+	return append(args, c.ColVal)
 }
 
 func (c Compare) SQL(args []interface{}) (string, []interface{}) {
@@ -24,6 +29,10 @@ func (c Compare) SQL(args []interface{}) (string, []interface{}) {
 type In struct {
 	ColName string
 	InVals  []interface{}
+}
+
+func (c In) Args(args []interface{}) []interface{} {
+	return append(args, c.InVals...)
 }
 
 func (s In) SQL(args []interface{}) (string, []interface{}) {
@@ -41,6 +50,22 @@ func (s In) SQL(args []interface{}) (string, []interface{}) {
 type Conjunction struct {
 	Joiner string
 	Parts  []Condition
+}
+
+func MakeConjunction(join string, parts ...Condition) Condition {
+	l := len(parts)
+	if l == 0 {
+		return nil
+	} else if l == 1 {
+		return parts[0]
+	}
+	return Conjunction{Joiner: join, Parts: parts}
+}
+func (c Conjunction) Args(args []interface{}) []interface{} {
+	for _, p := range c.Parts {
+		args = p.Args(args)
+	}
+	return args
 }
 
 func (c Conjunction) SQL(args []interface{}) (string, []interface{}) {

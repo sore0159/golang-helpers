@@ -1,21 +1,25 @@
 package mydb
 
-import "fmt"
+import (
+	"fmt"
+	sq "mule/mydb/sql"
+)
 
 func Delete(db DBer, table string, pkCols []string, items ...SQLer) error {
 	itemLen := len(items)
 	if itemLen == 0 {
 		return nil
 	}
-	conds := make([]interface{}, 0, len(pkCols)*2)
-	for _, col := range pkCols {
-		conds = append(conds, col, nil)
+	var query string
+	if len(pkCols) == 1 {
+		query, _ = sq.DELETE(table).WHERE(sq.EQ(pkCols[0], nil)).Compile()
+	} else {
+		conds := make([]sq.Condition, len(pkCols))
+		for i, pk := range pkCols {
+			conds[i] = sq.EQ(pk, nil)
+		}
+		query, _ = sq.DELETE(table).WHERE(sq.AND(conds...)).Compile()
 	}
-	query, _, err := DeleteQA(table, conds)
-	if my, bad := Check(err, "delete querygen failure", "table", table, "conds", conds); bad {
-		return my
-	}
-
 	stmt, err := db.Prepare(query)
 	if my, bad := Check(err, "delete prepare failure", "query", query); bad {
 		return my

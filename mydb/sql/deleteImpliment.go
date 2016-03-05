@@ -23,3 +23,9 @@ func (d *dropper) Compile() (query string, args []interface{}) {
 	}
 	return query, args
 }
+func (d *dropper) Args() []interface{} {
+	if d.Where == nil {
+		return nil
+	}
+	return d.Where.Args(nil)
+}

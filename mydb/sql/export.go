@@ -1,39 +1,57 @@
 package sql
 
 // INSERT creates an inserter for function chaining
-// and finally Compile()
+// and finally Compile() or Args()
+// Compile() is for query+args, args is for quickly
+// parsing args without doing all the string building
+// for prepared statements
+//
 // COLS must be called before VALS, and must be
 // of the same length
+// Optionally VALS may be omitted for querygens
+// not tracking arguments (mass interts).  Nils
+// will be provided
 //
 // Methods:
-//		required: Compile, COLS, VALS
-//		optional: RETURN
+//		required: Compile, COLS
+//		optional: RETURN, VALS
 // Example:
 //      c := sql.INSERT("tweets").COLS("author", "content").VALS(
 //			"mule", "HELLO WORLD"
-//		).RETURN("id")
+//		).RETURN("id", "likes")
 //		query, args := c.Compile()
 func INSERT(table string) *inserter {
 	return &inserter{Table: table}
 }
 
 // UPDATE creates an updater for function chaining
-// and finally Compile()
+// and finally Compile() or Args()
 // COLS must be called before TO, and must be
-// of the same length
+// of the same length. TO can be omitted if you
+// are not collecting arguments; nils will be supplied.
+// Compile() is for query+args, Args() is for quickly
+// parsing args without doing all the string building
+// for prepared statements
 //
 // Methods:
-//		required: Compile, COLS, TO
-//		optional: WHERE, RETURN
+//		required: Compile, COLS
+//		optional: WHERE, RETURN, TO
 // Example:
 //      c := sql.UPDATE("cards").COLS("number", "suit").TO(3, "spade").WHERE(sql.EQ("id", 2))
 //		query, args := c.Compile()
+//
+// Example querygen for multi-updates:
+//      c2 := sql.UPDATE("days").COLS("count").WHERE(EQ("id", nil))
+//		query, _ = c.Compile()
 func UPDATE(table string) *updater {
 	return &updater{Table: table}
 }
 
 // DELETE creates a deletor for function chaining
 // and finally Compile()
+// Compile() is for query+args, args is for quickly
+// parsing args without doing all the string building
+// for prepared statements
 //
 // Methods:
 //		required: Compile
@@ -50,6 +68,7 @@ func DELETE(table string) *dropper {
 
 // SELECT creates a selector for function chaining
 // and finally Compile()
+// If COLS is not called, * is selected
 //
 // Methods:
 //		required: Compile
@@ -61,6 +80,12 @@ func DELETE(table string) *dropper {
 //		query, args := c.Compile()
 func SELECT(table string) *selector {
 	return &selector{Table: table}
+}
+
+// P is for vardic functions to not type switch strings
+type P struct {
+	Col string
+	Val interface{}
 }
 
 // Condititons are for WHERE clauses, and here are
@@ -78,8 +103,22 @@ func EQ(col string, val interface{}) Condition {
 	return Compare{Operator: "=", ColName: col, ColVal: val}
 }
 func AND(conds ...Condition) Condition {
-	return Conjunction{Joiner: "AND", Parts: conds}
+	return MakeConjunction("AND", conds...)
 }
 func OR(conds ...Condition) Condition {
-	return Conjunction{Joiner: "OR", Parts: conds}
+	return MakeConjunction("OR", conds...)
+}
+
+// AllEQ really is my most common use case
+func AllEQ(ps ...P) Condition {
+	return AND(EQList(ps...)...)
+}
+
+// EQList is if we want to AND a bunch of EQs with an IN or something
+func EQList(ps ...P) []Condition {
+	parts := make([]Condition, len(ps))
+	for i, p := range ps {
+		parts[i] = EQ(p.Col, p.Val)
+	}
+	return parts
 }

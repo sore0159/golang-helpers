@@ -1,0 +1,62 @@
+{{ define "main"}}{{ $pack := (index . 0).PackName }}package {{ $pack }}
+
+import (
+    "mule/mydb/db"
+    "mule/mybad"
+)
+
+var (
+	Check     = mybad.BuildCheck("package", "{{ $pack }}")
+)
+
+type Manager struct {
+    D db.DBer{{ range . }}
+    {{ .Name }} *{{ .Name }}Session {{ end }}
+}
+
+func NewManager(d db.DBer) *Manager {
+    return &Manager{D: d}
+}
+
+{{ range . }}
+func (m *Manager) New{{ .Name }}Session() *{{ .Name }}Session {
+    s := New{{ .Name }}Session(m.D)
+    m.{{ .Name }} = s
+    return s
+}
+{{ end }}
+
+func (m *Manager) Close() error {
+    var err error{{ range . }}
+    if m.{{ .Name }} != nil {
+        err = m.{{ .Name }}.Close()
+        if my, bad := Check(err, "manager close failure on {{ .Name }} Close"); bad {
+            return my
+        }
+    }
+{{ end }}
+    return nil
+}
+
+
+func CreateAllTables(d db.DBer) error {
+    var err error{{ range . }}
+    err = {{ .Name }}TableCreate(d)
+    if my, bad := Check(err, "Create all tables failure on table {{ .Name }}"); bad {
+        return my
+    }
+    {{ end }}
+    return nil
+}
+
+func DropAllTables(d db.DBer) error {
+    var err error{{ range . }}
+    err = {{ .Name }}TableDelete(d)
+    if my, bad := Check(err, "Delete all tables failure on table {{ .Name }}"); bad {
+        return my
+    }
+    {{ end }}
+    return nil
+}
+
+{{ end }}

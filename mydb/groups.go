@@ -1,5 +1,26 @@
 package mydb
 
+type GroupMaker interface {
+	SQLGroup() SQLGrouper
+}
+
+type SQLGrouper interface {
+	SQLTable() string
+	PKCols() []string
+
+	DeleteList() []SQLer
+
+	SelectCols() []string
+	New() SQLer
+
+	UpdateCols() []string
+	UpdateList() []SQLer
+
+	InsertCols() []string
+	InsertScanCols() []string
+	InsertList() []SQLer
+}
+
 type DeleteGrouper interface {
 	PKCols() []string
 	SQLTable() string

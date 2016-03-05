@@ -1,0 +1,290 @@
+{{ define "main"}}
+{{ $sName := .Name }}
+package {{ .PackName }}
+
+import (
+    "errors"
+    "encoding/json"
+    "mule/mydb/db"
+    gp "mule/mydb/group"{{ range .Imports }}
+    "{{ . }}"{{ end }}
+)
+
+// --------- BEGIN TYPES ------------ //
+
+type {{ .Name }}Get interface {
+    UnmarshalJSON([]byte) error
+{{ range .Fields }}
+    {{ .Name }}() {{ .Type }} {{ end }}
+}
+type {{ .Name }}Set interface {
+    MarshalJSON() ([]byte, error)
+    SQLDELETE()
+{{ range .Fields }}{{ if .Update }}
+    Set{{ .Name }}({{ .Type }}) {{ end }}{{ end }}
+}
+type {{ .Name }}Dat interface {
+    {{ .Name }}Get
+    {{ .Name }}Set
+}
+
+type {{ .Name }} struct { {{ range .Fields }}
+    {{ .Name }} {{ .Type }} `json:"{{ .LowerName }}"` {{ end }}
+    sql gp.SQLStruct
+}
+// --------- END TYPES ------------ //
+
+// --------- BEGIN GENERIC METHODS ------------ //
+
+func New{{ .Name }}() *{{ .Name }} {
+    return &{{ .Name }}{
+        //
+    }
+}
+
+type {{ .Name }}Intf struct {
+    item *{{ .Name }}
+}
+
+func (item *{{ .Name }}) Intf() {{ .IntfPack}}{{ .Name }}Dat {
+    return &{{.Name}}Intf{item}
+}
+
+func (i {{ .Name }}Intf) SQLDELETE() {
+    i.item.sql.DELETE = true
+}
+
+func (item *{{ .Name}}) SQLVal(name string) interface{} {
+    switch name { {{ range .Fields }}
+    case "{{ .LowerName }}":
+        return item.{{ .Name }}{{ end }}
+    }
+    return nil
+}
+
+func (item *{{ .Name}}) SQLPtr(name string) interface{} {
+    switch name { {{ range .Fields }}
+    case "{{ .LowerName }}":
+        return &item.{{ .Name }}{{ end }}
+    }
+    return nil
+}
+func (item *{{ .Name }}) SQLTable() string {
+    return "{{ .LowerName }}"
+}
+
+func (i {{ .Name }}Intf) MarshalJSON() ([]byte, error) {
+	return json.Marshal(i.item)
+}
+func (i {{ .Name }}Intf) UnmarshalJSON(data []byte) error {
+	i.item = &{{ .Name }}{}
+	return json.Unmarshal(data, i.item)
+}
+
+{{ range .Fields }}
+func (i {{ $sName }}Intf) {{ .Name }}() {{ .Type }} {
+    return i.item.{{ .Name }}
+}
+{{ if .Update }}
+func (i {{ $sName }}Intf) Set{{ .Name }}(x {{ .Type }}) {
+{{ if .Comparable }} if i.item.{{ .Name }} == x {
+        return
+    }
+{{ end }} i.item.{{ .Name }} = x
+    i.item.sql.UPDATE = true
+}
+{{ end }}
+
+{{ end }}
+// --------- END GENERIC METHODS ------------ //
+// --------- BEGIN CUSTOM METHODS ------------ //
+
+
+// --------- END CUSTOM METHODS ------------ //
+// --------- BEGIN GROUP ------------ //
+
+type {{ .Name }}Group struct {
+    List []*{{ .Name }}
+}
+
+func New{{ .Name }}Group() *{{ .Name }}Group {
+    return &{{ .Name }}Group{
+        List: []*{{ .Name }}{},
+    }
+}
+
+func (item *{{ .Name }}) SQLGroup() gp.SQLGrouper {
+    return New{{ .Name }}Group()
+}
+
+func (group *{{ .Name }}Group) New() gp.SQLer {
+    item := New{{ .Name }}()
+    group.List = append(group.List, item)
+    return item
+}
+
+func (group *{{ .Name }}Group) UpdateList() []gp.SQLer {
+    list := make([]gp.SQLer, 0, len(group.List))
+    for _, item := range group.List {
+        if item.sql.UPDATE && !item.sql.INSERT && !item.sql.DELETE {
+            list = append(list, item)
+        }
+    }
+    return list
+}
+
+func (group *{{ .Name }}Group) InsertList() []gp.SQLer {
+    list := make([]gp.SQLer, 0, len(group.List))
+    for _, item := range group.List {
+        if item.sql.INSERT && !item.sql.DELETE {
+            list = append(list, item)
+        }
+    }
+    return list
+}
+
+func (group *{{ .Name }}Group) DeleteList() []gp.SQLer {
+    list := make([]gp.SQLer, 0, len(group.List))
+    for _, item := range group.List {
+        if item.sql.DELETE {
+            list = append(list, item)
+        }
+    }
+    return list
+}
+
+func (group *{{ .Name }}Group) SQLTable() string {
+    return "{{ .LowerName }}"
+}
+
+func (group *{{ .Name }}Group) PKCols() []string {
+    return []string{ {{ range .Fields }}{{ if .PK }}
+        "{{ .LowerName }}", {{ end }}{{ end }}
+    }
+}
+
+func (group *{{ .Name }}Group) InsertCols() []string {
+    return []string{ {{ range .Fields }}{{ if .Insert }}
+        "{{ .LowerName }}", {{ end }}{{ end }}
+    }
+}
+
+func (group *{{ .Name }}Group) InsertScanCols() []string {
+    return []string{ {{ range .Fields }}{{ if .InsertScan }}
+        "{{ .LowerName }}", {{ end }}{{ end }}
+    }
+}
+
+func (group *{{ .Name }}Group) SelectCols() []string {
+    return []string{ {{ range .Fields }}
+        "{{ .LowerName }}",{{ end }}
+    }
+}
+
+func (group *{{ .Name }}Group) UpdateCols() []string {
+    return []string{ {{ range .Fields }}{{ if .Update }}
+        "{{ .LowerName }}", {{ end }}{{ end }}
+    }
+}
+
+
+// --------- END GROUP ------------ //
+// --------- BEGIN SESSION ------------ //
+type {{ .Name }}Session struct {
+    *{{ .Name }}Group
+    *gp.Session
+}
+
+func New{{ .Name }}Session(d db.DBer) *{{ .Name }}Session {
+    group := New{{ .Name }}Group()
+    return &{{ .Name }}Session{
+        {{ .Name }}Group: group,
+        Session: gp.NewSession(group, d),
+    }
+}
+
+// --------- END SESSION  ------------ //
+// --------- BEGIN UTILS ------------ //
+
+func convert{{ .Name }}2Struct(list ...{{ .IntfPack }}{{ .Name }}Dat) ([]*{{ .Name }}, error) {
+    mylist := make([]*{{ .Name }}, 0, len(list))
+    for _, test := range list {
+        if test == nil {
+            continue
+        }
+        if t, ok := test.({{ .Name }}Intf); ok {
+            mylist = append(mylist, t.item)
+        } else {
+            return nil, errors.New("bad {{ .Name }} struct type for conversion")
+        }
+    }
+    return mylist, nil
+}
+
+func convert{{ .Name }}2Intf(list ...*{{ .Name }}) []{{ .IntfPack }}{{ .Name }}Dat {
+    converted := make([]{{ .IntfPack }}{{ .Name }}Dat, len(list))
+    for i, item := range list {
+        converted[i] = item.Intf()
+    }
+    return converted
+}
+
+
+func {{ .Name }}TableCreate(d db.DBer) error {
+	query := `create table {{ .LowerName }}({{ range .Fields }}
+    {{ .LowerName }} {{ .SQLType }}{{ if not .CanNull}} NOT NULL{{ end }},{{ end }}
+    {{ if .PKStr }}PRIMARY KEY ({{ .PKStr }})
+{{ end }});`
+    err := db.Exec(d, false, query)
+    if my, bad := Check(err, "failed {{ .Name }} table creation", "query", query); bad {
+        return my
+    }
+    return nil
+}
+
+func {{ .Name }}TableDelete(d db.DBer) error {
+	query := "DROP TABLE IF EXISTS {{ .LowerName }} CASCADE"
+    err := db.Exec(d, false, query)
+    if my, bad := Check(err, "failed {{ .Name }} table deletion", "query", query); bad {
+        return my
+    }
+    return nil
+}
+
+
+
+/* 
+
+// Null <--> 0 convereter
+
+func (i {{ $sName }}Intf) XXX() int {
+    if !i.item.XXX.Valid {
+        return 0
+    }
+    return int(i.item.XXX.Int64)
+}
+
+func (i {{ $sName }}Intf) SetXXX(x int) {
+    if x == 0 {
+        if !i.item.XXX.Valid {
+            return
+        }
+        i.item.XXX.Valid = false
+        i.item.XXX.Int64 = 0
+        return
+    }
+    x64 := int64(x)
+    if i.item.XXX.Valid && i.item.XXX.Int64 == x64 {
+        return
+    }
+    i.item.XXX.Int64 = x64
+    i.item.XXX.Valid = true
+    i.item.sql.UPDATE = true
+}
+
+*/
+// --------- END UTILS ------------ //
+
+
+{{ end }}
+

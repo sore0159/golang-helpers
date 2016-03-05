@@ -29,6 +29,12 @@ func (u *inserter) RETURN(cols ...string) *inserter {
 	u.Return = cols
 	return u
 }
+func (u *inserter) Args() (args []interface{}) {
+	for _, c := range u.Vals {
+		args = append(args, c.Val)
+	}
+	return args
+}
 func (u *inserter) Compile() (query string, args []interface{}) {
 	colParts := make([]string, len(u.Vals))
 	setParts := make([]string, len(u.Vals))

@@ -1,11 +1,13 @@
 {{ define "main"}}
 {{ $sName := .Name }}
+{{ $write := .Writeable }}
 package {{ .PackName }}
 
 import (
     "errors"
     "encoding/json"
     "mule/mydb/db"
+    sq "mule/mydb/sql"
     gp "mule/mydb/group"{{ range .Imports }}
     "{{ . }}"{{ end }}
 )
@@ -19,13 +21,14 @@ type {{ .Name }}Get interface {
 }
 type {{ .Name }}Set interface {
     MarshalJSON() ([]byte, error)
-    SQLDELETE()
-{{ range .Fields }}{{ if .Update }}
-    Set{{ .Name }}({{ .Type }}) {{ end }}{{ end }}
-}
+    DELETE()
+{{ if $write }}{{ range .Fields }}{{ if .Update }}
+    Set{{ .Name }}({{ .Type }}) {{ end }}{{ end }}{{ end }}
+} 
+
 type {{ .Name }}Dat interface {
     {{ .Name }}Get
-    {{ .Name }}Set
+    {{ .Name }}Set 
 }
 
 type {{ .Name }} struct { {{ range .Fields }}
@@ -50,7 +53,7 @@ func (item *{{ .Name }}) Intf() {{ .IntfPack}}{{ .Name }}Dat {
     return &{{.Name}}Intf{item}
 }
 
-func (i {{ .Name }}Intf) SQLDELETE() {
+func (i {{ .Name }}Intf) DELETE() {
     i.item.sql.DELETE = true
 }
 
@@ -85,7 +88,7 @@ func (i {{ .Name }}Intf) UnmarshalJSON(data []byte) error {
 func (i {{ $sName }}Intf) {{ .Name }}() {{ .Type }} {
     return i.item.{{ .Name }}
 }
-{{ if .Update }}
+{{ if and $write .Update }}
 func (i {{ $sName }}Intf) Set{{ .Name }}(x {{ .Type }}) {
 {{ if .Comparable }} if i.item.{{ .Name }} == x {
         return
@@ -202,6 +205,25 @@ func New{{ .Name }}Session(d db.DBer) *{{ .Name }}Session {
         Session: gp.NewSession(group, d),
     }
 }
+
+func (s *{{ .Name }}Session) Select(conditions ...interface{}) ([]{{ .IntfPack }}{{ .Name}}Dat, error) {
+    cur := len(s.{{ .Name }}Group.List)
+    err := s.Session.Select(conditions...)
+    if my, bad := Check(err, "{{ .Name }} select failed", "conditions", conditions); bad {
+        return nil, err
+    }
+    return convert{{ .Name }}2Intf(s.{{ .Name }}Group.List[cur:]...), nil
+}
+
+func (s *{{ .Name }}Session) SelectWhere(where sq.Condition) ([]{{ .IntfPack }}{{ .Name}}Dat, error) {
+    cur := len(s.{{ .Name }}Group.List)
+    err := s.Session.SelectWhere(where)
+    if my, bad := Check(err, "{{ .Name }} SelectWhere failed", "where", where); bad {
+        return nil, err
+    }
+    return convert{{ .Name }}2Intf(s.{{ .Name }}Group.List[cur:]...), nil
+}
+
 
 // --------- END SESSION  ------------ //
 // --------- BEGIN UTILS ------------ //

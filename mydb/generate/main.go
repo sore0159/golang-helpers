@@ -13,8 +13,8 @@ import (
 func main() {
 	fmt.Println("")
 	log.Println("Hello and welcome to mulegen Code Generation Services")
-	structTP := template.Must(template.ParseFiles("item.tmpl"))
-	managerTP := template.Must(template.ParseFiles("overmind.tmpl"))
+	structTP := template.Must(template.ParseFiles("tmpl/item.tmpl"))
+	managerTP := template.Must(template.ParseFiles("tmpl/overmind.tmpl"))
 	dirInfo, err := ioutil.ReadDir("in")
 	if err != nil {
 		log.Println("DIR READ ERROR:", err)

@@ -11,7 +11,7 @@ var (
 
 type Manager struct {
     D db.DBer{{ range . }}
-    {{ .Name }} *{{ .Name }}Session {{ end }}
+    {{ .Name }}Session *{{ .Name }}Session {{ end }}
 }
 
 func NewManager(d db.DBer) *Manager {
@@ -19,17 +19,27 @@ func NewManager(d db.DBer) *Manager {
 }
 
 {{ range . }}
-func (m *Manager) New{{ .Name }}Session() *{{ .Name }}Session {
+func (m *Manager) {{ .Name }}() *{{ .Name }}Session {
     s := New{{ .Name }}Session(m.D)
-    m.{{ .Name }} = s
+    m.{{ .Name }}Session = s
     return s
 }
+
+func (m *Manager) Create{{ .Name }}(item *{{ .Name }}) {
+    if m.{{ .Name }}Session == nil {
+        m.{{ .Name }}Session = New{{ .Name }}Session(m.D)
+    }
+    item.sql.INSERT = true
+    m.{{ .Name }}Session.List = append(m.{{ .Name }}Session.List, item)
+}
+
 {{ end }}
+
 
 func (m *Manager) Close() error {
     var err error{{ range . }}
-    if m.{{ .Name }} != nil {
-        err = m.{{ .Name }}.Close()
+    if m.{{ .Name }}Session != nil {
+        err = m.{{ .Name }}Session.Close()
         if my, bad := Check(err, "manager close failure on {{ .Name }} Close"); bad {
             return my
         }
@@ -37,7 +47,6 @@ func (m *Manager) Close() error {
 {{ end }}
     return nil
 }
-
 
 func CreateAllTables(d db.DBer) error {
     var err error{{ range . }}

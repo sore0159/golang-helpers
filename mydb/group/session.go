@@ -19,11 +19,19 @@ func NewSession(group SQLGrouper, d db.DBer) *Session {
 	}
 }
 
-func (s *Session) Select(conditions ...EQ) error {
-	return Select(s.D, s.Group, conditions...)
+func (s *Session) Select(conditions ...interface{}) error {
+	ps, err := sq.Convert2P(conditions)
+	if my, bad := Check(err, "Session select failed on argument conversion", "args", conditions); bad {
+		return my
+	}
+	return Select(s.D, s.Group, ps...)
 }
 func (s *Session) SelectWhere(where sq.Condition) error {
 	return SelectWhere(s.D, s.Group, where)
+}
+
+func (s *Session) Delete(where sq.Condition) error {
+	return DeleteWhere(s.D, s.Group.SQLTable(), where)
 }
 
 func (s *Session) Close() (err error) {

@@ -14,6 +14,7 @@ type StructData struct {
 	LowerName string      // sql tablename, basically
 	Fields    []FieldData // Tag fields with // comments
 	PKStr     string
+	Writeable bool
 }
 
 type FieldData struct {
@@ -142,7 +143,10 @@ func (sd *StructData) ImportParse(lines []string) error {
 func (sd *StructData) TypeParse(lines []string) error {
 	line, comments := ScrubLine(lines[0])
 	fields := strings.Fields(line)
-	_ = comments
+	cMap := ParseFieldComments(comments)
+	if !cMap["NOWRITE"] {
+		sd.Writeable = true
+	}
 	if len(fields) < 3 {
 		return errors.New("couldn't parse first struct line")
 	}
@@ -216,6 +220,9 @@ func (sd *StructData) TypeParse(lines []string) error {
 		case "hexagon.NullCoord":
 			fD.SQLType = "point"
 			fD.CanNull = true
+		case "hexagon.CoordList":
+			fD.SQLType = "point[]"
+			fD.Comparable = false
 		default:
 			fD.SQLType = fields[1]
 		}

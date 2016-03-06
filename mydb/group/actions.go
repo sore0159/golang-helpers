@@ -29,9 +29,9 @@ func Update(d db.DBer, group UpdateGrouper) error {
 // Select is for the main use case of a series of columns that
 // all must match:
 // Example:
-//		err := group.Select(d, group, group.EQ{"gid", 1}, group.EQ{"planet", 2})
-func Select(d db.DBer, group SelectGrouper, conditions ...EQ) error {
-	where := sq.AllEQ(Convert2P(conditions...)...)
+//		err := group.Select(d, group, sq.P{"gid", 1}, sq.P{"planet", 2})
+func Select(d db.DBer, group SelectGrouper, conditions ...sq.P) error {
+	where := sq.AllEQ(conditions...)
 	return SelectWhere(d, group, where)
 }
 

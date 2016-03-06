@@ -1,5 +1,7 @@
 package sql
 
+import "errors"
+
 // INSERT creates an inserter for function chaining
 // and finally Compile() or Args()
 // Compile() is for query+args, args is for quickly
@@ -121,4 +123,23 @@ func EQList(ps ...P) []Condition {
 		parts[i] = EQ(p.Col, p.Val)
 	}
 	return parts
+}
+
+// Convert2P is a helper if you REALLY just don't care
+// about type saftey and want to use ...interface{}
+func Convert2P(list []interface{}) ([]P, error) {
+	l := len(list)
+	if l%2 != 0 {
+		return nil, errors.New("odd interface args for convert2P")
+	}
+	them := make([]P, l/2)
+	for i := 0; i < l; i += 2 {
+		col, ok := list[i].(string)
+		if !ok {
+			return nil, errors.New("nonstring interface arg for convert2P")
+		}
+		them[i].Col = col
+		them[i].Val = list[i+1]
+	}
+	return them, nil
 }

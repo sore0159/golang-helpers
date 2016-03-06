@@ -15,6 +15,7 @@ func main() {
 	log.Println("Hello and welcome to mulegen Code Generation Services")
 	structTP := template.Must(template.ParseFiles("tmpl/item.tmpl"))
 	managerTP := template.Must(template.ParseFiles("tmpl/overmind.tmpl"))
+	intfTP := template.Must(template.ParseFiles("tmpl/intf.tmpl"))
 	dirInfo, err := ioutil.ReadDir("in")
 	if err != nil {
 		log.Println("DIR READ ERROR:", err)
@@ -67,6 +68,32 @@ func main() {
 		}
 		outFile.Close()
 		GoFmt("out/overManager.go")
+
+		outFile, err = os.Create("out/interfaceCollection.go")
+		if err != nil {
+			log.Println("INTERFACE FILE CREATE ERROR:", err)
+			return
+		}
+		intfP := strings.Trim(allData[0].IntfPack, ".")
+		if intfP == "" {
+			intfP = allData[0].PackName
+		}
+		mainData := MainData{
+			IntfPack: intfP,
+			Structs:  allData,
+		}
+		for _, sd := range allData {
+			mainData.Imports = append(mainData.Imports, sd.Imports...)
+		}
+		err = intfTP.ExecuteTemplate(outFile, "main", mainData)
+		if err != nil {
+			log.Println("INTERFACE TEMPLATE ERROR:", err)
+			outFile.Close()
+			return
+		}
+		outFile.Close()
+		GoFmt("out/interfaceCollection.go")
+
 	}
 	log.Println("Thank you for your patronage\n")
 	return

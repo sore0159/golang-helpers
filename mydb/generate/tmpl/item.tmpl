@@ -12,30 +12,10 @@ import (
     "{{ . }}"{{ end }}
 )
 
-// --------- BEGIN TYPES ------------ //
-
-type {{ .Name }}Get interface {
-    UnmarshalJSON([]byte) error
-{{ range .Fields }}
-    {{ .Name }}() {{ .Type }} {{ end }}
-}
-type {{ .Name }}Set interface {
-    MarshalJSON() ([]byte, error)
-    DELETE()
-{{ if $write }}{{ range .Fields }}{{ if .Update }}
-    Set{{ .Name }}({{ .Type }}) {{ end }}{{ end }}{{ end }}
-} 
-
-type {{ .Name }}Dat interface {
-    {{ .Name }}Get
-    {{ .Name }}Set 
-}
-
 type {{ .Name }} struct { {{ range .Fields }}
     {{ .Name }} {{ .Type }} `json:"{{ .LowerName }}"` {{ end }}
     sql gp.SQLStruct
 }
-// --------- END TYPES ------------ //
 
 // --------- BEGIN GENERIC METHODS ------------ //
 
@@ -210,7 +190,7 @@ func (s *{{ .Name }}Session) Select(conditions ...interface{}) ([]{{ .IntfPack }
     cur := len(s.{{ .Name }}Group.List)
     err := s.Session.Select(conditions...)
     if my, bad := Check(err, "{{ .Name }} select failed", "conditions", conditions); bad {
-        return nil, err
+        return nil, my
     }
     return convert{{ .Name }}2Intf(s.{{ .Name }}Group.List[cur:]...), nil
 }
@@ -219,7 +199,7 @@ func (s *{{ .Name }}Session) SelectWhere(where sq.Condition) ([]{{ .IntfPack }}{
     cur := len(s.{{ .Name }}Group.List)
     err := s.Session.SelectWhere(where)
     if my, bad := Check(err, "{{ .Name }} SelectWhere failed", "where", where); bad {
-        return nil, err
+        return nil, my
     }
     return convert{{ .Name }}2Intf(s.{{ .Name }}Group.List[cur:]...), nil
 }

@@ -1,0 +1,33 @@
+{{ define "main"}}package {{ .IntfPack }}
+
+{{ if .Imports }}
+import ({{ range .Imports }}
+    "{{ . }}"{{ end }}
+){{ end }}
+
+
+{{ range .Structs }}
+{{ $sName := .Name }}
+{{ $write := .Writeable }}
+
+type {{ .Name }}Get interface {
+    UnmarshalJSON([]byte) error
+{{ range .Fields }}
+    {{ .Name }}() {{ .Type }} {{ end }}
+}
+type {{ .Name }}Set interface {
+    MarshalJSON() ([]byte, error)
+    DELETE()
+{{ if $write }}{{ range .Fields }}{{ if .Update }}
+    Set{{ .Name }}({{ .Type }}) {{ end }}{{ end }}{{ end }}
+} 
+
+type {{ .Name }}Dat interface {
+    {{ .Name }}Get
+    {{ .Name }}Set 
+}
+
+
+{{ end }}
+
+{{ end }}

@@ -6,6 +6,12 @@ import (
 	"strings"
 )
 
+type MainData struct {
+	IntfPack string
+	Imports  []string
+	Structs  []StructData
+}
+
 type StructData struct {
 	PackName  string
 	IntfPack  string   // Tag package definition with FOR xxxx

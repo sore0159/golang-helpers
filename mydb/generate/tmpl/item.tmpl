@@ -12,8 +12,8 @@ import (
     "{{ . }}"{{ end }}
 )
 
-type {{ .Name }} struct { {{ range .Fields }}
-    {{ .Name }} {{ .Type }} `json:"{{ .LowerName }}"` {{ end }}
+type {{ .Name }} struct { {{ range .Fields }}{{ if not .SQLOnly }}
+    {{ .Name }} {{ .Type }} `json:"{{ .LowerName }}"` {{ end }}{{ end }}
     sql gp.SQLStruct
 }
 
@@ -38,17 +38,17 @@ func (i {{ .Name }}Intf) DELETE() {
 }
 
 func (item *{{ .Name}}) SQLVal(name string) interface{} {
-    switch name { {{ range .Fields }}
+    switch name { {{ range .Fields }}{{ if not .NoSQL }}
     case "{{ .LowerName }}":
-        return item.{{ .Name }}{{ end }}
+        return item.{{ .Name }}{{ end }}{{ end }}
     }
     return nil
 }
 
 func (item *{{ .Name}}) SQLPtr(name string) interface{} {
-    switch name { {{ range .Fields }}
+    switch name { {{ range .Fields }}{{ if not .NoSQL }}
     case "{{ .LowerName }}":
-        return &item.{{ .Name }}{{ end }}
+        return &item.{{ .Name }}{{ end }}{{ end }}
     }
     return nil
 }
@@ -64,7 +64,32 @@ func (i {{ .Name }}Intf) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, i.item)
 }
 
-{{ range .Fields }}
+{{ range .Fields }}{{ if not .SQLOnly }}{{ if eq .Type "sql.NullInt64" }}
+func (i {{ $sName }}Intf) {{ .Name }}() int {
+    if !i.item.{{ .Name }}.Valid {
+        return 0
+    }
+    return int(i.item.{{ .Name }}.Int64)
+}
+
+func (i {{ $sName }}Intf) Set{{ .Name }}(x int) {
+    if x == 0 {
+        if !i.item.{{ .Name }}.Valid {
+            return
+        }
+        i.item.{{ .Name }}.Valid = false
+        i.item.{{ .Name }}.Int64 = 0
+        return
+    }
+    x64 := int64(x)
+    if i.item.{{ .Name }}.Valid && i.item.{{ .Name }}.Int64 == x64 {
+        return
+    }
+    i.item.{{ .Name }}.Int64 = x64
+    i.item.{{ .Name }}.Valid = true
+    i.item.sql.UPDATE = true
+}
+{{ else }}
 func (i {{ $sName }}Intf) {{ .Name }}() {{ .Type }} {
     return i.item.{{ .Name }}
 }
@@ -78,7 +103,7 @@ func (i {{ $sName }}Intf) Set{{ .Name }}(x {{ .Type }}) {
 }
 {{ end }}
 
-{{ end }}
+{{ end }}{{ end }}{{ end }}
 // --------- END GENERIC METHODS ------------ //
 // --------- BEGIN CUSTOM METHODS ------------ //
 
@@ -106,14 +131,15 @@ func (group *{{ .Name }}Group) New() gp.SQLer {
     return item
 }
 
-func (group *{{ .Name }}Group) UpdateList() []gp.SQLer {
+func (group *{{ .Name }}Group) UpdateList() []gp.SQLer { {{ if .Writeable }}
     list := make([]gp.SQLer, 0, len(group.List))
     for _, item := range group.List {
         if item.sql.UPDATE && !item.sql.INSERT && !item.sql.DELETE {
             list = append(list, item)
         }
     }
-    return list
+    return list{{ else }}
+    return nil{{ end }}
 }
 
 func (group *{{ .Name }}Group) InsertList() []gp.SQLer {
@@ -159,15 +185,16 @@ func (group *{{ .Name }}Group) InsertScanCols() []string {
 }
 
 func (group *{{ .Name }}Group) SelectCols() []string {
-    return []string{ {{ range .Fields }}
-        "{{ .LowerName }}",{{ end }}
+    return []string{ {{ range .Fields }}{{ if not .NoSQL }}
+        "{{ .LowerName }}",{{ end }}{{ end }}
     }
 }
 
-func (group *{{ .Name }}Group) UpdateCols() []string {
+func (group *{{ .Name }}Group) UpdateCols() []string { {{ if not .Writeable }}
+    return nil{{ else }}
     return []string{ {{ range .Fields }}{{ if .Update }}
         "{{ .LowerName }}", {{ end }}{{ end }}
-    }
+    }{{ end }}
 }
 
 
@@ -233,8 +260,8 @@ func convert{{ .Name }}2Intf(list ...*{{ .Name }}) []{{ .IntfPack }}{{ .Name }}D
 
 
 func {{ .Name }}TableCreate(d db.DBer) error {
-	query := `create table {{ .LowerName }}({{ range .Fields }}
-    {{ .LowerName }} {{ .SQLType }}{{ if not .CanNull}} NOT NULL{{ end }},{{ end }}
+	query := `create table {{ .LowerName }}({{ range .Fields }}{{ if not .NoSQL }}
+    {{ .LowerName }} {{ .SQLType }}{{ if not .CanNull}} NOT NULL{{ end }},{{ end }}{{ end }}
     {{ if .PKStr }}PRIMARY KEY ({{ .PKStr }})
 {{ end }});`
     err := db.Exec(d, false, query)
@@ -253,38 +280,6 @@ func {{ .Name }}TableDelete(d db.DBer) error {
     return nil
 }
 
-
-
-/* 
-
-// Null <--> 0 convereter
-
-func (i {{ $sName }}Intf) XXX() int {
-    if !i.item.XXX.Valid {
-        return 0
-    }
-    return int(i.item.XXX.Int64)
-}
-
-func (i {{ $sName }}Intf) SetXXX(x int) {
-    if x == 0 {
-        if !i.item.XXX.Valid {
-            return
-        }
-        i.item.XXX.Valid = false
-        i.item.XXX.Int64 = 0
-        return
-    }
-    x64 := int64(x)
-    if i.item.XXX.Valid && i.item.XXX.Int64 == x64 {
-        return
-    }
-    i.item.XXX.Int64 = x64
-    i.item.XXX.Valid = true
-    i.item.sql.UPDATE = true
-}
-
-*/
 // --------- END UTILS ------------ //
 
 

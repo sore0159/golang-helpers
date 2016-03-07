@@ -11,15 +11,15 @@ import ({{ range .Imports }}
 {{ $write := .Writeable }}
 
 type {{ .Name }}Get interface {
-    UnmarshalJSON([]byte) error
-{{ range .Fields }}
-    {{ .Name }}() {{ .Type }} {{ end }}
+    MarshalJSON() ([]byte, error)
+{{ range .Fields }}{{ if not .SQLOnly }}
+    {{ .Name }}() {{ if eq .Type "sql.NullInt64" }}int{{ else }}{{ .Type }}{{ end }} {{ end }}{{ end }}
 }
 type {{ .Name }}Set interface {
-    MarshalJSON() ([]byte, error)
+    UnmarshalJSON([]byte) error
     DELETE()
 {{ if $write }}{{ range .Fields }}{{ if .Update }}
-    Set{{ .Name }}({{ .Type }}) {{ end }}{{ end }}{{ end }}
+    Set{{ .Name }}({{ if eq .Type "sql.NullInt64" }}int{{ else }}{{ .Type }}{{ end }}) {{ end }}{{ end }}{{ end }}
 } 
 
 type {{ .Name }}Dat interface {

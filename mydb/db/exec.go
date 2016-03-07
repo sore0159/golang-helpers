@@ -17,8 +17,9 @@ import (
 func Exec(db DBer, must bool, query string, qArgsList ...[]interface{}) error {
 	itemLen := len(qArgsList)
 	if itemLen == 0 {
-		return nil
+		qArgsList = [][]interface{}{nil}
 	}
+
 	stmt, err := db.Prepare(query)
 	if my, bad := Check(err, "delete prepare failure", "query", query); bad {
 		return my

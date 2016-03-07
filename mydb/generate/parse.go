@@ -35,6 +35,8 @@ type FieldData struct {
 	InsertScan bool // tag SCAN for true
 	Comparable bool // tag NOCOMP for false
 	CanNull    bool // tag NULL for true
+	NoSQL      bool // not user setable
+	SQLOnly    bool // not user setable
 }
 
 func ParseStructData(inBytes []byte) (StructData, error) {
@@ -223,6 +225,33 @@ func (sd *StructData) TypeParse(lines []string) error {
 			fD.CanNull = true
 		case "hexagon.Coord":
 			fD.SQLType = "point"
+			if cMap["PK"] {
+				fD.PK = false
+				fD.NoSQL = true
+				fD.Update = false
+				fD.Insert = false
+				fD.InsertScan = false
+
+				fDx := FieldData{}
+				fDx.Name = fD.Name + "[0]"
+				fDx.LowerName = fD.LowerName + "x"
+				fDx.Type = "int"
+				fDx.SQLOnly = true
+				fDx.PK = true
+				fDx.Insert = true
+				pks[len(pks)-1] = fDx.LowerName
+				sd.Fields = append(sd.Fields, fDx)
+
+				fDy := FieldData{}
+				fDy.Name = fD.Name + "[1]"
+				fDy.LowerName = fD.LowerName + "y"
+				fDy.Type = "int"
+				fDy.SQLOnly = true
+				fDy.PK = true
+				fDy.Insert = true
+				pks = append(pks, fDy.LowerName)
+				sd.Fields = append(sd.Fields, fDy)
+			}
 		case "hexagon.NullCoord":
 			fD.SQLType = "point"
 			fD.CanNull = true

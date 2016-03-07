@@ -43,6 +43,7 @@ func (m *Manager) Close() error {
         if my, bad := Check(err, "manager close failure on {{ .Name }} Close"); bad {
             return my
         }
+        m.{{ .Name }}Session = nil
     }
 {{ end }}
     return nil

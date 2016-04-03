@@ -21,21 +21,21 @@ func Exec(db DBer, must bool, query string, qArgsList ...[]interface{}) error {
 	}
 
 	stmt, err := db.Prepare(query)
-	if my, bad := Check(err, "delete prepare failure", "query", query); bad {
+	if my, bad := Check(err, "exec prepare failure", "query", query); bad {
 		return my
 	}
 	defer stmt.Close()
 	if must {
 		for i, qArgs := range qArgsList {
 			err := ExecCheck(stmt.Exec(qArgs...))
-			if my, bad := Check(err, "delete exec failure on Must check", "index", i, "query", query, "args", qArgs); bad {
+			if my, bad := Check(err, "exec failure on Must check", "index", i, "query", query, "args", qArgs); bad {
 				return my
 			}
 		}
 	} else {
 		for i, qArgs := range qArgsList {
 			_, err := stmt.Exec(qArgs...)
-			if my, bad := Check(err, "delete exec failure", "index", i, "query", query, "args", qArgs); bad {
+			if my, bad := Check(err, "exec failure", "index", i, "query", query, "args", qArgs); bad {
 				return my
 			}
 		}

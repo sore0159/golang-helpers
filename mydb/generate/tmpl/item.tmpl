@@ -79,6 +79,7 @@ func (i {{ $sName }}Intf) Set{{ .Name }}(x int) {
         }
         i.item.{{ .Name }}.Valid = false
         i.item.{{ .Name }}.Int64 = 0
+        i.item.sql.UPDATE = true
         return
     }
     x64 := int64(x)
@@ -88,8 +89,30 @@ func (i {{ $sName }}Intf) Set{{ .Name }}(x int) {
     i.item.{{ .Name }}.Int64 = x64
     i.item.{{ .Name }}.Valid = true
     i.item.sql.UPDATE = true
+}{{ else if eq .Type "sql.NullString" }}
+func (i {{ $sName }}Intf) {{ .Name }}() string {
+    if !i.item.{{ .Name }}.Valid {
+        return ""
+    }
+    return i.item.{{ .Name }}.String
 }
-{{ else }}
+func (i {{ $sName }}Intf) Set{{ .Name }}(x string) {
+    if x == "" {
+        if !i.item.{{ .Name }}.Valid {
+            return
+        }
+        i.item.{{ .Name }}.Valid = false
+        i.item.{{ .Name }}.String = ""
+        i.item.sql.UPDATE = true
+        return
+    }
+    if i.item.{{ .Name }}.Valid && i.item.{{ .Name }}.String == x {
+        return
+    }
+    i.item.{{ .Name }}.String = x
+    i.item.{{ .Name }}.Valid = true
+    i.item.sql.UPDATE = true
+}{{ else }}
 func (i {{ $sName }}Intf) {{ .Name }}() {{ .Type }} {
     return i.item.{{ .Name }}
 }

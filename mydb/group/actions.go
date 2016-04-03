@@ -18,10 +18,14 @@ func Update(d db.DBer, group UpdateGrouper) error {
 	qArgsList := make([][]interface{}, len(sqlers))
 	for i, item := range sqlers {
 		list, err := ColVals(item, cols)
-		if my, bad := Check(err, "group update fail on ColVals for item", "index", i, "item", item, "cols", cols); bad {
+		if my, bad := Check(err, "group update fail on update ColVals for item", "index", i, "item", item, "cols", cols); bad {
 			return my
 		}
-		qArgsList[i] = list
+		pkList, err := ColVals(item, pkCols)
+		if my, bad := Check(err, "group update fail on pk ColVals for item", "index", i, "item", item, "pkCols", pkCols); bad {
+			return my
+		}
+		qArgsList[i] = append(list, pkList...)
 	}
 	return db.Exec(d, true, query, qArgsList...)
 }

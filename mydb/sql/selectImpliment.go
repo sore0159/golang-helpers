@@ -27,7 +27,7 @@ func (s *selector) ORDER(ord string) *selector {
 
 func (s *selector) Compile() (query string, args []interface{}) {
 	var colStr string
-	if len(s.Cols) > 0 {
+	if len(s.Cols) == 0 {
 		colStr = "*"
 	} else {
 		colStr = strings.Join(s.Cols, ",")

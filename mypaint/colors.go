@@ -9,10 +9,23 @@ var COLORS = [...]string{
 	"white", "black", "charcoal", "grey", "auburn", "yellow", "golden",
 	"pale", "amber", "tawny", "tan", "ochre", "olive", "khaki", "brown",
 	"blue", "green", "purple", "red", "pink", "cherry", "strawberry",
+	"plum", "slateblue", "turquoise", "chartreuse", "emerald",
 }
 
 func Pallate(name string) color.RGBA {
 	switch name {
+	case "chartreuse":
+		return color.RGBA{0x7f, 0xff, 0x00, 255}
+	case "emerald":
+		return color.RGBA{0x00, 0xc9, 0x57, 255}
+	case "turquoise":
+		return color.RGBA{0x00, 0xf5, 0xff, 255}
+	case "dodgerblue":
+		return color.RGBA{0x1e, 0x90, 0xff, 255}
+	case "slateblue":
+		return color.RGBA{0x84, 0x70, 0xff, 255}
+	case "plum":
+		return color.RGBA{0x60, 0x11, 0x2d, 255}
 	case "shade":
 		return color.RGBA{0, 0, 0, 40}
 	case "whiteshade":

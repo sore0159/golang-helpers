@@ -133,13 +133,13 @@ func Convert2P(list []interface{}) ([]P, error) {
 		return nil, errors.New("odd interface args for convert2P")
 	}
 	them := make([]P, l/2)
-	for i := 0; i < l; i += 2 {
-		col, ok := list[i].(string)
+	for i := 0; i < l/2; i += 1 {
+		col, ok := list[2*i].(string)
 		if !ok {
 			return nil, errors.New("nonstring interface arg for convert2P")
 		}
 		them[i].Col = col
-		them[i].Val = list[i+1]
+		them[i].Val = list[2*i+1]
 	}
 	return them, nil
 }

@@ -20,7 +20,7 @@ func (ss *successShell) Serve(w http.ResponseWriter) (err error) {
 type failShell struct {
 	Status string          `json:"status"`
 	Data   json.RawMessage `json:"data"`
-	code   int
+	code   int             `json:"-"`
 }
 
 func (fs *failShell) Serve(w http.ResponseWriter) (err error) {

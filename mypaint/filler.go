@@ -42,6 +42,9 @@ func (f *Filler) TakePath(p *Path) {
 func (f *Filler) Scale(sx, sy float64) {
 	f.GC.Scale(sx, sy)
 }
+func (f *Filler) Translate(sx, sy float64) {
+	f.GC.Translate(sx, sy)
+}
 
 func (f *Filler) Fill(mypaths ...*Path) {
 	if len(mypaths) == 0 {
@@ -116,4 +119,10 @@ func (p *Filler) SetStrokeLight(s float64) {
 func (f *Filler) Pencil() {
 	f.SetLineWidth(1)
 	f.SetStrokeC("black")
+}
+func (f *Filler) IsFillWhite() bool {
+	return f.CurFillColor == color.RGBA{0xff, 0xff, 0xff, 40}
+}
+func (f *Filler) IsFillBlack() bool {
+	return f.CurFillColor == color.RGBA{0, 0, 0, 255}
 }

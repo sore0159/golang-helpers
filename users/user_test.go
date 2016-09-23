@@ -33,3 +33,8 @@ func TestSecond(t *testing.T) {
 		log.Println("LOGIN 2 INVALID")
 	}
 }
+
+// CREATE TABLE userinfo (
+//		name varchar(20) PRIMARY KEY,
+//		password varchar(20)
+// );
